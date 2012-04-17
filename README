@@ -1,15 +1,34 @@
-An example of Coq plugin that defines a reification tactic. 
+An example of Coq plugin that defines some custom timing tactics. 
 
-The files should be self-documented, even though we may manage to build a pdf that summarizes every interesting point. At the moment, the project needs coq trunk, in order to build the Makefile (coq_makefile ws evely patched recently). 
+This plugin has beem compiled succesfully with Coq 8.3-pl4
 
-FILES DESCRIPTION
+INSTALL
 =================
 
-arguments.txt : the pre-makefile that is fed to coq_makefile (coq_makefile -f arguments.txt -o Makefile)
-src/lib_coq.ml{i} : an interface with Coq, where we define some handlers for Coq's API and constructs. 
-src/plugin.ml4 : the actual plugin that defines a reification tactic for a very simple subset of terms on nat
-src/Theory.v : reification primer
-test-suite/example.v : an example of usage of the tactic we defined in src/plugin.ml4. 
+coq_makefile -f arguments.txt -o Makefile
+make 
+make install
 
+USAGE
+=================
+
+This plugin defines a few new tactics:
+- [run_timer n] (with n being an integer) starts the timer [n]
+- [stop_timer n] (with n being an integer) stops the timer [n]
+- [reset_timer n] (with n being an integer) resete the timer [n]
+- [print_current_time] prints the current time of the day (as a 
+  floating poing number)
+
+This plugin defines two new vernacular commands:
+- [Print Timing Profile] which iterates through all the defined
+  timers, and print the time they have been running
+- [Clear Timing Profile] clears the global state
+
+A few notes:
+- this plugin uses a global state that is _not_ kept in sync when
+moving bottom up in a PG buffer
+- if a timer is started inside a tactic, which later fails, then the
+timer is not implicitely stopped
+- a timer that is already stopped may be stopped again...
 
 
