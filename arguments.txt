@@ -1,4 +1,4 @@
--I src 
+-R src Timing
 -custom "$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -shared -o src/timing_plugin.cmxs src/timing_plugin.cmx" "src/timing_plugin.cmx" src/timing_plugin.cmxs
 -custom "$(CAMLLINK) -g -a -o src/timing_plugin.cma src/timing_plugin.cmo src/timing_plugin.cmo" "src/timing_plugin.cmo src/timing_plugin.cmo" src/timing_plugin.cma
 -custom "$(COQBIN)coqc $(COQDEBUG) $(COQFLAGS) $*" "%.v $(TIMING_PLUGINOPT) $(TIMING_PLUGIN)" "%.vo %.glob"

@@ -35,7 +35,7 @@ CAMLP4LIB:=$(shell $(CAMLP4BIN)$(CAMLP4) -where)
 #                        #
 ##########################
 
-OCAMLLIBS:=-I src
+OCAMLLIBS:=
 COQSRCLIBS:=-I $(COQLIB)/kernel -I $(COQLIB)/lib \
   -I $(COQLIB)/library -I $(COQLIB)/parsing \
   -I $(COQLIB)/pretyping -I $(COQLIB)/interp \
@@ -62,8 +62,8 @@ COQSRCLIBS:=-I $(COQLIB)/kernel -I $(COQLIB)/lib \
   -I $(COQLIB)/plugins/subtac/test \
   -I $(COQLIB)/plugins/syntax \
   -I $(COQLIB)/plugins/xml
-COQLIBS:=-I src 
-COQDOCLIBS:=
+COQLIBS:= -R src Timing
+COQDOCLIBS:=-R src Timing
 
 ##########################
 #                        #
@@ -105,7 +105,8 @@ PP:=-pp "$(CAMLP4BIN)$(CAMLP4)o -I $(CAMLLIB) -I . $(COQSRCLIBS) $(CAMLP4EXTEND)
 VFILES:=src/Timing.v\
   test-suite/example.v
 VOFILES:=$(VFILES:.v=.vo)
-VOFILES0:=$(filter-out ,$(VOFILES))
+VOFILES1:=$(patsubst src/%,%,$(filter src/%,$(VOFILES)))
+VOFILES0:=$(filter-out src/%,$(VOFILES))
 GLOBFILES:=$(VFILES:.v=.glob)
 VIFILES:=$(VFILES:.v=.vi)
 GFILES:=$(VFILES:.v=.g)
@@ -113,12 +114,15 @@ HTMLFILES:=$(VFILES:.v=.html)
 GHTMLFILES:=$(VFILES:.v=.g.html)
 MLFILES:=src/timing_plugin.ml
 CMOFILES:=$(MLFILES:.ml=.cmo)
-CMOFILES0:=$(filter-out ,$(CMOFILES))
+CMOFILES1:=$(patsubst src/%,%,$(filter src/%,$(CMOFILES)))
+CMOFILES0:=$(filter-out src/%,$(CMOFILES))
 CMIFILES:=$(MLFILES:.ml=.cmi)
-CMIFILES0:=$(filter-out ,$(CMIFILES))
+CMIFILES1:=$(patsubst src/%,%,$(filter src/%,$(CMIFILES)))
+CMIFILES0:=$(filter-out src/%,$(CMIFILES))
 CMXFILES:=$(MLFILES:.ml=.cmx)
 CMXSFILES:=$(MLFILES:.ml=.cmxs)
-CMXSFILES0:=$(filter-out ,$(CMXSFILES))
+CMXSFILES1:=$(patsubst src/%,%,$(filter src/%,$(CMXSFILES)))
+CMXSFILES0:=$(filter-out src/%,$(CMXSFILES))
 OFILES:=$(MLFILES:.ml=.o)
 
 all: $(VOFILES) $(CMOFILES) $(CMXSFILES) src/timing_plugin.cmxs\
@@ -228,17 +232,33 @@ opt:
 
 install:
 	mkdir -p $(COQLIB)/user-contrib
+	(cd src; for i in $(VOFILES1); do \
+	 install -d `dirname $(COQLIB)/user-contrib/Timing/$$i`; \
+	 install $$i $(COQLIB)/user-contrib/Timing/$$i; \
+	 done)
 	(for i in $(VOFILES0); do \
 	 install -d `dirname $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i`; \
 	 install $$i $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i; \
+	 done)
+	(cd src; for i in $(CMOFILES1); do \
+	 install -d `dirname $(COQLIB)/user-contrib/Timing/$$i`; \
+	 install $$i $(COQLIB)/user-contrib/Timing/$$i; \
 	 done)
 	(for i in $(CMOFILES0); do \
 	 install -d `dirname $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i`; \
 	 install $$i $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i; \
 	 done)
+	(cd src; for i in $(CMIFILES1); do \
+	 install -d `dirname $(COQLIB)/user-contrib/Timing/$$i`; \
+	 install $$i $(COQLIB)/user-contrib/Timing/$$i; \
+	 done)
 	(for i in $(CMIFILES0); do \
 	 install -d `dirname $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i`; \
 	 install $$i $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i; \
+	 done)
+	(cd src; for i in $(CMXSFILES1); do \
+	 install -d `dirname $(COQLIB)/user-contrib/Timing/$$i`; \
+	 install $$i $(COQLIB)/user-contrib/Timing/$$i; \
 	 done)
 	(for i in $(CMXSFILES0); do \
 	 install -d `dirname $(COQLIB)/user-contrib/$(INSTALLDEFAULTROOT)/$$i`; \
