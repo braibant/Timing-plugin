@@ -13,9 +13,9 @@ USAGE
 =================
 
 This plugin defines a few new tactics:
-- [run_timer n] (with n being an integer) starts the timer [n]
-- [stop_timer n] (with n being an integer) stops the timer [n]
-- [reset_timer n] (with n being an integer) resete the timer [n]
+- [start_timer n] (with n being an string) starts the timer [n]
+- [stop_timer n] (with n being an string) stops the timer [n]
+- [reset_timer n] (with n being an string) reset the timer [n]
 - [print_current_time] prints the current time of the day (as a 
   floating poing number)
 
@@ -29,6 +29,20 @@ A few notes:
 moving bottom up in a PG buffer
 - if a timer is started inside a tactic, which later fails, then the
 timer is not implicitely stopped
-- a timer that is already stopped may be stopped again...
+
+
+Timer may be stopped and started multiple times (in the following
+example, we denote starting a timer by 'a' and stoping it by 'b'). 
+
+- t1 : a; t2 : b will increment the number of runs by 1, the total
+ time by t2 - t1, and the mean and variance accordingly
+
+- t1 : a; t2 : a; t3 : b;  t4 : b will increment the number of runs by
+  2, the total time by (t3 - t2) + (t4 - t1), and the mean and
+  variance accordingly
+
+- t1 : a; t2 : a; t3 : b is legal, will increment the number of runs
+  by 1, the total time by (t3 - t2).  
+
 
 

@@ -8,35 +8,42 @@ module Section = struct
 
     type t =
 	{
-	  mutable last : float option; 
+	  stack : float Stack.t ; 
 	  mutable total : float;
+	  mutable number : int; 
+	  mutable mean : float;
+	  mutable m2 : float
 	}
 	  
 	  
     (** operations on timers *)
-    let run (r : t) = 
-      match r.last with
-	| Some _ -> ()
-	| None -> r.last <- Some (current ())
-	  
-	  
+    let start (r : t) = 
+      Stack.push (current ()) r.stack
+	  	  
     let stop (r : t) = 
-      match r.last with 
-	| None -> () (* warning *)
-	| Some t -> 
-	  r.total <- r.total +. (current () -. t); 
-	  r.last <- None
-
+      try 
+	let t = Stack.pop r.stack in 
+	let x = current () -. t in 
+	r.total <- r.total +. x; 
+	r.number <- r.number + 1; 
+	let delta = x -. r.mean in 
+	r.mean <- r.mean +. (delta /. float r.number); 
+	r.m2 <- r.m2 +. delta *. ( x -. r.mean)
+      with 
+	| Stack.Empty -> () 			(* warning *)
+	 
     let zero () =
-      {last = None; total = 0.}
+      {stack = Stack.create (); total = 0. ; number = 0; mean = 0.; m2 = 0.}
   end
     
   let state = Hashtbl.create 17;;
 
   (** operations on the mutable global state  *)	  
 
+  type key = string 
+  let print_key fmt k = Format.fprintf fmt "%10s" k
   (** [run n] starts the timer [n], and create it if needed *)
-  let run (n: int) =
+  let start (n: key) =
     let r = 
       try Hashtbl.find state n 
       with 
@@ -45,10 +52,10 @@ module Section = struct
 	  Hashtbl.add state n r;
 	  r
     in
-    Timer.run r
+    Timer.start r
 
   (** [stop n] stop the timer [n] *)
-  let stop (n : int) = 
+  let stop (n : key) = 
     try 
       let r = Hashtbl.find state n in 
       Timer.stop r
@@ -56,7 +63,7 @@ module Section = struct
       | Not_found -> ()
 	
   (** [reset n] sets back a given timer to zero *)
-  let reset (n : int) = 
+  let reset (n : key) = 
     Hashtbl.replace state n (Timer.zero ())
 
   (** [clear] reset all timers *)
@@ -64,9 +71,22 @@ module Section = struct
     Hashtbl.clear state
 
   let print fmt () =
-    Hashtbl.iter
-      (fun key timer -> Format.fprintf fmt "%i:\t%f\n" key timer.Timer.total)
-      state
+    let elements = Hashtbl.fold (fun key elt acc -> (key, elt) :: acc) state [] in
+    let elements = List.sort (Pervasives.compare) elements in 
+    List.iter
+      (fun (key,timer) -> 
+	if timer.Timer.number <> 0 
+	then 
+	  begin 
+	    Format.fprintf fmt "%a:\t(total:%f, mean:%f, runs:%i, sigma2:%f)\n" 
+	      print_key key 
+	      timer.Timer.total
+	      timer.Timer.mean
+	      timer.Timer.number
+	      (timer.Timer.m2 /. (float timer.Timer.number))	  
+	  end;
+	  )
+      elements
 end  
   
 let _=Mltop.add_known_module "Timing_plugin"
@@ -82,23 +102,23 @@ let _ = Pp.msgnl (Pp.str "Loading the Timing Profiler")
 open Tacexpr
 open Tacinterp
 
-TACTIC EXTEND run_timer
-  | ["run_timer" integer(n)] -> 
+TACTIC EXTEND start_timer
+  | ["start_timer" string(n)] -> 
     [
       fun gl -> 
-	Section.run n; 
+	Section.start n; 
 	Tacticals.tclIDTAC gl]
 END;;
 
 TACTIC EXTEND stop_timer
-  | ["stop_timer" integer(n)] -> 
+  | ["stop_timer" string(n)] -> 
     [fun gl -> 
       Section.stop n;
       Tacticals.tclIDTAC gl]
 END;;
 
 TACTIC EXTEND reset_timer
-  | ["reset_timer" integer(n)] -> 
+  | ["reset_timer" string(n)] -> 
     [fun gl -> Section.reset n; Tacticals.tclIDTAC gl]
 END;;
 
