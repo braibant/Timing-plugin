@@ -1,7 +1,7 @@
 Require Import String. 
 Add Rec LoadPath "../src/" as Timing.  
 Add ML Path "../src/". 
-Declare ML Module "Timing_plugin". 
+Declare ML Module "timing_plugin". 
              
 Ltac count_ltac n m :=
   match n with
