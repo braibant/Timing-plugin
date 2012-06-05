@@ -1,6 +1,7 @@
 An example of Coq plugin that defines some custom timing tactics. 
 
-This plugin has beem compiled succesfully with Coq 8.3-pl4
+This plugin has beem compiled succesfully with Coq 8.3-pl4 and 8.4 beta
+
 
 INSTALL
 =================
