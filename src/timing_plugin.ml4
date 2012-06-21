@@ -127,6 +127,16 @@ TACTIC EXTEND print_current_time
     [fun gl -> Pp.msgnl (Pp.str (Format.sprintf "Current time: %f\n%!" (Section.current()))); Tacticals.tclIDTAC gl]
 END;;
 
+
+TACTIC EXTEND time_tactic
+  | ["time" string(n) tactic(t)] -> 
+    [fun gl -> 
+      Section.start n;
+      let res = (Tacinterp.eval_tactic t) gl in 
+      Section.stop n; res
+    ]
+END;;
+
 VERNAC COMMAND EXTEND PrintTimingProfile
  ["Print" "Timing" "Profile"] ->
    [ Pp.msgnl (Pp.str (pp_print ())) ]

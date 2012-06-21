@@ -30,3 +30,9 @@ Goal True.
   Print Timing Profile. 
   Clear Timing Profile. 
 Abort.
+
+Require Import Omega.
+Goal forall n m , n + m + n <= n + m + n + m. 
+intros. time "omega" omega. 
+Print Timing Profile. 
+Qed. 

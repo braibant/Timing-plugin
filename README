@@ -18,6 +18,8 @@ This plugin defines a few new tactics:
 - [reset_timer n] (with n being an string) reset the timer [n]
 - [print_current_time] prints the current time of the day (as a 
   floating poing number)
+- [time n tac] (with n being a string and tac a tactic) compute the
+times spent in tac, and add it to the timer n 
 
 This plugin defines two new vernacular commands:
 - [Print Timing Profile] which iterates through all the defined
