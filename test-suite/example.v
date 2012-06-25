@@ -1,7 +1,7 @@
 Require Import String. 
 Add Rec LoadPath "../src/" as Timing.  
 Add ML Path "../src/". 
-Declare ML Module "Timing_plugin". 
+Declare ML Module "timing_plugin". 
              
 Ltac count_ltac n m :=
   match n with
@@ -30,3 +30,9 @@ Goal True.
   Print Timing Profile. 
   Clear Timing Profile. 
 Abort.
+
+Require Import Omega.
+Goal forall n m , n + m + n <= n + m + n + m. 
+intros. time "omega" omega. 
+Print Timing Profile. 
+Qed. 
