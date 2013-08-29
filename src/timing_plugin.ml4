@@ -130,10 +130,12 @@ END;;
 
 TACTIC EXTEND time_tactic
   | ["time" string(n) tactic(t)] -> 
-    [fun gl -> 
-      Section.start n;
-      let res = (Tacinterp.eval_tactic t) gl in 
-      Section.stop n; res
+    [
+      let tac =  Tacinterp.eval_tactic t in 
+      fun gl -> 
+	Section.start n;
+	let res = tac gl in 
+	Section.stop n; res
     ]
 END;;
 
