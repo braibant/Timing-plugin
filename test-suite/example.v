@@ -52,3 +52,15 @@ Proof.
   cbv zeta; simpl twos.
   Fail poor_mans_timeout 1 apply f_equal.
 Admitted.
+
+(* Test assert_timer_running/assert_timer_not_running *)
+Goal True.
+assert_timer_not_running "test1".
+Fail assert_timer_running "test1".
+start_timer "test1".
+assert_timer_running "test1".
+Fail assert_timer_not_running "test1".
+stop_timer "test1".
+assert_timer_not_running "test1".
+Fail assert_timer_running "test1".
+Abort.
