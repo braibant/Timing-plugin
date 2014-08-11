@@ -5,6 +5,8 @@
 open Glob_term
 (* For [anomaly] *)
 open Util
+(* For pp **)
+open Pp
 
 module Section = struct
   let current () = Unix.gettimeofday ();;
@@ -41,6 +43,10 @@ module Section = struct
       {stack = Stack.create (); total = 0. ; number = 0; mean = 0.; m2 = 0.}
 
     let get (r : t) : float = r.mean
+
+    let is_running (r : t) : bool =
+      not (Stack.is_empty r.stack)
+
   end
 
   let state = Hashtbl.create 17;;
@@ -75,6 +81,13 @@ module Section = struct
       Timer.get r
     with
       | Not_found -> Pervasives.float_of_int 0
+
+  let is_running (n : key) =
+    try
+      let r = Hashtbl.find state n in
+      Timer.is_running r
+    with
+    | Not_found -> false
 
   (** [reset n] sets back a given timer to zero *)
   let reset (n : key) =
@@ -123,8 +136,7 @@ open Tacinterp
 
 TACTIC EXTEND start_timer
   | ["start_timer" string(n)] ->
-    [
-      fun gl ->
+    [ fun gl ->
 	Section.start n;
 	Tacticals.tclIDTAC gl]
 END;;
@@ -158,13 +170,30 @@ END;;
 
 TACTIC EXTEND time_tactic
   | ["time" string(n) tactic(t)] ->
-    [
-      let tac =  Tacinterp.eval_tactic t in
+    [ let tac =  Tacinterp.eval_tactic t in
       fun gl ->
 	Section.start n;
 	let res = tac gl in
 	Section.stop n; res
     ]
+END;;
+
+TACTIC EXTEND assert_timer_running
+  | ["assert_timer_running" string(n)] ->
+    [fun gl ->
+      if Section.is_running n then
+	Tacticals.tclIDTAC gl
+      else
+	Tacticals.tclFAIL 0 (Pp.str "Timer" ++ Pp.spc () ++ Pp.qstring n ++ Pp.spc () ++ Pp.str " is not running!") gl ]
+END;;
+
+TACTIC EXTEND assert_timer_not_running
+  | ["assert_timer_not_running" string(n)] ->
+    [fun gl ->
+      if Section.is_running n then
+	Tacticals.tclFAIL 0 (Pp.str "Timer" ++ Pp.spc () ++ Pp.qstring n ++ Pp.spc () ++ Pp.str " is running!") gl
+      else
+	Tacticals.tclIDTAC gl ]
 END;;
 
 VERNAC COMMAND EXTEND PrintTimingProfile
