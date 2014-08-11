@@ -64,3 +64,12 @@ stop_timer "test1".
 assert_timer_not_running "test1".
 Fail assert_timer_running "test1".
 Abort.
+
+Print Timing Profile Sort By "Key+".
+Print Timing Profile Sort By "Key-".
+Print Timing Profile Sort By "Total+".
+Print Timing Profile Sort By "Total-".
+Print Timing Profile Sort By "Mean-".
+Print Timing Profile Sort By "Mean+".
+Print Timing Profile Sort By "Runs-".
+Print Timing Profile Sort By "Runs+".

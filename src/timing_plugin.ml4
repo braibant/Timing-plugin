@@ -97,9 +97,33 @@ module Section = struct
   let clear () =
     Hashtbl.clear state
 
-  let print fmt () =
+  type sort =
+    Key | Total | Mean | Runs
+  | Flip of sort
+  | Then of sort * sort
+
+  let sort_key : (key * Timer.t) -> (key * Timer.t) -> int = Pervasives.compare
+  let sort_flip (f : (key * Timer.t) -> (key * Timer.t) -> int) : (key * Timer.t) -> (key * Timer.t) -> int =
+    fun a b -> f b a
+  let sort_by (f : Timer.t -> 'b) : (key * Timer.t) -> (key * Timer.t) -> int =
+    fun (_,a) (_,b) -> Pervasives.compare (f a) (f b)
+  let sort_then (f : 'a -> 'a -> int) (g : 'a -> 'a -> int) : 'a -> 'a -> int =
+    fun a b ->
+      let res = f a b in
+      if res = 0 then g a b else res
+
+  let rec sort_denote s =
+    match s with
+      Flip s -> sort_flip (sort_denote s)
+    | Key -> sort_key
+    | Total -> sort_by (fun t -> t.Timer.total)
+    | Mean -> sort_by (fun t -> t.Timer.mean)
+    | Runs -> sort_by (fun t -> t.Timer.number)
+    | Then (s1,s2) -> sort_then (sort_denote s1) (sort_denote s2)
+
+  let print sorter fmt () =
     let elements = Hashtbl.fold (fun key elt acc -> (key, elt) :: acc) state [] in
-    let elements = List.sort (Pervasives.compare) elements in
+    let elements = List.stable_sort (sort_denote sorter) elements in
     List.iter
       (fun (key,timer) ->
 	if timer.Timer.number <> 0
@@ -123,13 +147,27 @@ let out_arg = function
 
 let _=Mltop.add_known_module "Timing_plugin"
 
-let pp_print () =
+let pp_print sorter () =
   let buf = Buffer.create 4 in
   let fmt = Format.formatter_of_buffer buf in
-  let _ = (Format.fprintf fmt "%a\n%!" Section.print ()) in
+  let _ = (Format.fprintf fmt "%a\n%!" (Section.print sorter) ()) in
   (Buffer.contents buf)
 
 let _ = Pp.msgnl (Pp.str "Loading the Timing Profiler")
+
+let sort_for s =
+  match s with
+    "Mean" | "Mean+" -> Section.Mean
+  | "Mean-" -> Section.Flip Section.Mean
+  | "Key" | "Key+" -> Section.Key
+  | "Key-" -> Section.Flip Section.Key
+  | "Runs" | "Runs+" -> Section.Runs
+  | "Runs-" -> Section.Flip Section.Runs
+  | "Total" | "Total+" -> Section.Total
+  | "Total-" -> Section.Flip Section.Total
+  | _ ->
+    Pp.msgerrnl (Pp.str "Unknown sorting definition:" ++ Pp.spc () ++ Pp.str s) ;
+    Section.Key
 
 open Tacexpr
 open Tacinterp
@@ -197,8 +235,10 @@ TACTIC EXTEND assert_timer_not_running
 END;;
 
 VERNAC COMMAND EXTEND PrintTimingProfile
- ["Print" "Timing" "Profile"] ->
-   [ Pp.msgnl (Pp.str (pp_print ())) ]
+  | ["Print" "Timing" "Profile"] ->
+    [ Pp.msgnl (Pp.str (pp_print Section.Key ())) ]
+  | ["Print" "Timing" "Profile" "Sort" "By" string(s) ] ->
+    [ Pp.msgnl (Pp.str (pp_print (sort_for s) ())) ]
 END;;
 
 VERNAC COMMAND EXTEND ClearTimingProfile
